@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#10091f" />
+  <title>初遇籽言 · 第一年星光</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="cards.css" />
+</head>
+<body>
+  <div class="ambient" aria-hidden="true">
+    <i></i><i></i><i></i>
+  </div>
+  <div class="stars" aria-hidden="true"></div>
+
+  <main class="app">
+    <header class="topbar glass">
+      <div class="brand">
+        <span class="brand-mark">✦</span>
+        <div>
+          <strong>初遇籽言</strong>
+          <small>FIRST YEAR MEMORY</small>
+        </div>
+      </div>
+      <div class="wallet-actions">
+        <div class="currency" title="种籽余额"><span>🌱</span><b id="currency">12,800</b><small>种籽</small></div>
+        <button class="redeem-entry" id="redeemEntry">兑换通道</button>
+      </div>
+    </header>
+
+    <section class="hero-shell">
+      <section class="hero glass">
+        <div class="eyebrow">LIMITED COLLECTION · 14 CARDS</div>
+        <h1>把初遇珍藏，<br><em>拼成这一年的星光</em></h1>
+        <p>收录应籽言「初遇籽言」全套 14 张收藏卡。抽到卡后会先展示卡背，再由你亲手翻开。</p>
+
+        <div class="hero-actions">
+          <button class="draw-btn primary" id="tenBtn">
+            <span>祈愿十次</span>
+            <small>🌱 1,520 · 95折</small>
+          </button>
+          <button class="draw-btn secondary" id="singleBtn">
+            <span>祈愿一次</span>
+            <small>🌱 160</small>
+          </button>
+        </div>
+      </section>
+
+      <aside class="summon-panel glass">
+        <div class="panel-title">
+          <span>当前卡池</span>
+          <strong>第一年的星光</strong>
+        </div>
+
+        <div class="rate-up">
+          <span class="tag">UP</span>
+          <div><small>UR 珍藏卡</small><strong>终幕星愿 · 紫光初遇</strong></div>
+        </div>
+
+        <div class="pity-row">
+          <span>距离 UR 保底</span>
+          <div class="pity-track"><i id="pityBar"></i></div>
+          <b><span id="pityCount">100</span> 抽</b>
+        </div>
+
+        <div class="rate-grid" aria-label="抽卡概率">
+          <span><b>0.5%</b><small>UR</small></span>
+          <span><b>4.5%</b><small>SSR</small></span>
+          <span><b>15%</b><small>SR</small></span>
+          <span><b>80%</b><small>R</small></span>
+        </div>
+        <p class="probability">十连必得 SR 或以上 · 100 抽必得 UR</p>
+      </aside>
+    </section>
+
+    <nav class="tabs glass" aria-label="内容切换">
+      <button class="tab active" data-tab="pool">卡池详情</button>
+      <button class="tab" data-tab="warehouse">卡牌仓库 <span id="warehouseBadge">0</span></button>
+      <button class="tab" data-tab="history">抽卡记录 <span id="historyBadge">0</span></button>
+    </nav>
+
+    <section class="tab-content active" id="pool">
+      <div class="section-head">
+        <div>
+          <small>POOL DETAILS</small>
+          <h2>点击卡牌可查看预览</h2>
+        </div>
+        <p>稀有度越高，翻开时光效越华丽。UR 使用冰晶极光，与 SR 紫光区分。</p>
+      </div>
+      <div class="pool-grid" id="poolGrid"></div>
+    </section>
+
+    <section class="tab-content" id="warehouse">
+      <div class="warehouse-head glass">
+        <div>
+          <small>MY COLLECTION</small>
+          <strong>我的卡牌</strong>
+          <span id="warehouseSummary">已拥有 0 张</span>
+        </div>
+        <div class="warehouse-tools">
+          <span>回收价值：R 20 · SR 80 · SSR 300 · UR 1,000 种籽</span>
+          <div>
+            <button class="exchange-entry" id="exchangeEntry">3 换 1 同级卡</button>
+            <button id="recycleExtras">每种保留 1 张，回收其余</button>
+          </div>
+        </div>
+      </div>
+      <div class="warehouse-grid" id="warehouseGrid"></div>
+    </section>
+
+    <section class="tab-content" id="history">
+      <div class="section-head">
+        <div>
+          <small>DRAW HISTORY</small>
+          <h2>最近 100 条抽卡记录</h2>
+        </div>
+      </div>
+      <div class="history-list" id="historyList"><div class="empty">还没有抽卡记录，去收藏第一年的星光吧。</div></div>
+      <button class="clear-btn" id="clearBtn">清空记录</button>
+    </section>
+  </main>
+
+  <div class="result-overlay" id="resultOverlay" aria-hidden="true">
+    <div class="result-header">
+      <span>本次收藏</span>
+      <div>
+        <button class="repeat-draw" id="repeatDraw">再来一抽</button>
+        <button class="reveal-all" id="revealAll">全部翻开</button>
+        <button class="icon-close" id="closeResult" aria-label="关闭">×</button>
+      </div>
+    </div>
+    <div class="result-grid" id="resultGrid"></div>
+    <p class="result-hint">点击卡背逐张翻开 · 鼠标悬停会根据稀有度散发光芒</p>
+  </div>
+
+  <div class="redeem-overlay" id="redeemOverlay" aria-hidden="true">
+    <section class="redeem-dialog" role="dialog" aria-modal="true" aria-labelledby="redeemTitle">
+      <button class="redeem-close" id="redeemClose" aria-label="关闭兑换通道">×</button>
+      <div class="redeem-icon">🌱</div>
+      <small>SEED EXCHANGE</small>
+      <h2 id="redeemTitle">种籽兑换通道</h2>
+      <p>输入纪念兑换码，领取用于抽卡的种籽。</p>
+      <form id="redeemForm">
+        <input id="redeemCode" type="text" autocomplete="off" maxlength="24" placeholder="请输入兑换码" aria-label="兑换码">
+        <button type="submit">确认兑换</button>
+      </form>
+      <div class="redeem-message" id="redeemMessage" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <div class="preview-overlay" id="previewOverlay" aria-hidden="true">
+    <button class="preview-close" id="previewClose" aria-label="关闭卡牌预览">×</button>
+    <figure class="preview-figure"><img id="previewImage" src="" alt=""><figcaption id="previewCaption"></figcaption></figure>
+  </div>
+
+  <div class="exchange-overlay" id="exchangeOverlay" aria-hidden="true">
+    <section class="exchange-dialog" role="dialog" aria-modal="true" aria-labelledby="exchangeTitle">
+      <button class="exchange-close" id="exchangeClose" aria-label="关闭重复卡兑换">×</button>
+      <div class="exchange-symbol">3 → 1</div>
+      <h2 id="exchangeTitle">重复卡牌兑换</h2>
+      <p>消耗 3 张相同卡牌，兑换同稀有度的任意另一张卡牌。</p>
+      <label>用于兑换的卡牌<select id="exchangeSource"></select></label>
+      <div class="exchange-arrow">↓</div>
+      <label>希望获得的卡牌<select id="exchangeTarget"></select></label>
+      <button class="exchange-confirm" id="exchangeConfirm">确认兑换</button>
+      <div class="exchange-message" id="exchangeMessage" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="script.js"></script>
+</body>
+</html>
