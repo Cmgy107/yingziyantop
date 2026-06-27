@@ -101,13 +101,9 @@
         <div class="wheel-stage">
           <div class="wheel-frame">
             <div class="wheel-pointer" aria-hidden="true"><span></span></div>
-            <div class="wheel-disc" id="wheelDisc">
-              <div class="wheel-sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-              <div class="wheel-center"><span>SPIN</span></div>
-            </div>
+            <div class="wheel-disc" id="wheelDisc" aria-label="魔法转盘"></div>
+            <button class="wheel-spin" id="wheelSpin">启动转盘</button>
           </div>
-          <button class="wheel-spin" id="wheelSpin">转动转盘</button>
-          <div class="wheel-result" id="wheelResult">等待抽取</div>
         </div>
         <div class="wheel-config">
           <div class="wheel-config-head">
@@ -123,6 +119,12 @@
             <button id="resetWheelConfig">恢复默认</button>
           </div>
           <div class="wheel-note" id="wheelNote"></div>
+        </div>
+        <div class="wheel-action-bar">
+          <p>活动规则：按自定义概率抽取，奖项可重复。</p>
+          <div>
+            <div class="wheel-result" id="wheelResult">等待抽取</div>
+          </div>
         </div>
       </div>
     </section>
@@ -205,6 +207,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

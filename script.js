@@ -143,11 +143,52 @@ function renderWheelConfig(){
   list.innerHTML=state.wheelPrizes.map((item,index)=>`<div class="wheel-prize-row" data-wheel-row="${index}"><input data-wheel-name value="${escapeHTML(item.name)}" aria-label="奖项名称"><input data-wheel-weight type="number" min="0" step="0.1" value="${item.weight}" aria-label="奖项概率"><button class="wheel-remove" data-wheel-remove="${index}" aria-label="删除奖项">×</button></div>`).join('');
 }
 function escapeHTML(text){return String(text).replace(/[&<>"']/g,match=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[match]))}
-function wheelGradient(prizes){
+function polar(cx,cy,r,angle){const rad=(angle-90)*Math.PI/180;return {x:cx+r*Math.cos(rad),y:cy+r*Math.sin(rad)}}
+function annularSegmentPath(start,end,outer=145,inner=72,cx=180,cy=180){
+  const pad=Math.min(1.6,(end-start)*.08);
+  const s=start+pad,e=end-pad;
+  const a=polar(cx,cy,outer,s),b=polar(cx,cy,outer,e),c=polar(cx,cy,inner,e),d=polar(cx,cy,inner,s),large=e-s>180?1:0;
+  return `M ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${outer} ${outer} 0 ${large} 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)} L ${c.x.toFixed(2)} ${c.y.toFixed(2)} A ${inner} ${inner} 0 ${large} 0 ${d.x.toFixed(2)} ${d.y.toFixed(2)} Z`;
+}
+function truncatePrizeName(name){return name.length>8?`${name.slice(0,8)}…`:name}
+function wheelSVG(prizes){
   const total=prizes.reduce((sum,item)=>sum+item.weight,0);
-  if(!total)return '';
   let cursor=0;
-  return `conic-gradient(${prizes.map((item,index)=>{const start=cursor/total*360;cursor+=item.weight;const end=cursor/total*360;return `${WHEEL_COLORS[index%WHEEL_COLORS.length]} ${start.toFixed(2)}deg ${end.toFixed(2)}deg`}).join(',')})`;
+  const segments=prizes.map((item,index)=>{
+    const start=cursor/total*360,end=(cursor+item.weight)/total*360,mid=(start+end)/2;
+    cursor+=item.weight;
+    const label=polar(180,180,108,mid),rune=polar(180,180,132,mid),gem=polar(180,180,88,mid),divider=polar(180,180,149,start);
+    const icon=['✦','✧','✺','◆','✹','✶'][index%6];
+    const labelRotate=mid>90&&mid<270?mid+180:mid;
+    return `<g class="wheel-prize-slice"><path class="wheel-segment" d="${annularSegmentPath(start,end)}" fill="${WHEEL_COLORS[index%WHEEL_COLORS.length]}"></path><line class="wheel-divider" x1="180" y1="180" x2="${divider.x.toFixed(1)}" y2="${divider.y.toFixed(1)}"></line><circle class="wheel-gem-dot" cx="${gem.x.toFixed(1)}" cy="${gem.y.toFixed(1)}" r="4.6"></circle><text class="wheel-label" x="${label.x.toFixed(1)}" y="${label.y.toFixed(1)}" transform="rotate(${labelRotate.toFixed(1)} ${label.x.toFixed(1)} ${label.y.toFixed(1)})">${escapeHTML(truncatePrizeName(item.name))}</text><text class="wheel-rune" x="${rune.x.toFixed(1)}" y="${rune.y.toFixed(1)}">${icon}</text></g>`;
+  }).join('');
+  const pearls=Array.from({length:32},(_,index)=>{const p=polar(180,180,166,index*360/32);return `<circle class="wheel-pearl" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${index%4===0?3.4:2.1}"></circle>`}).join('');
+  const ticks=Array.from({length:64},(_,index)=>{const a=index*360/64,p1=polar(180,180,index%4?153:151,a),p2=polar(180,180,index%4?158:163,a);return `<line class="wheel-tick" x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}"></line>`}).join('');
+  const stars=[20,70,112,158,204,252,300,338].map((angle,index)=>{const p=polar(180,180,index%2?58:61,angle);return `<path class="wheel-star" d="M${p.x} ${p.y-5}l1.4 3.5 3.8.3-2.9 2.5.9 3.7-3.2-2-3.2 2 .9-3.7-2.9-2.5 3.8-.3z"/>`}).join('');
+  return `<svg class="wheel-svg" viewBox="0 0 360 360" role="img" aria-label="紫色星夜魔法转盘">
+    <defs>
+      <radialGradient id="discShine" cx="38%" cy="26%" r="78%"><stop offset="0%" stop-color="#ffffff" stop-opacity=".28"/><stop offset="35%" stop-color="#e8d4ff" stop-opacity=".1"/><stop offset="100%" stop-color="#06030f" stop-opacity=".44"/></radialGradient>
+      <radialGradient id="deepViolet" cx="50%" cy="44%" r="62%"><stop offset="0%" stop-color="#39226e"/><stop offset="56%" stop-color="#1a1037"/><stop offset="100%" stop-color="#090512"/></radialGradient>
+      <linearGradient id="magicGold" x1="0" x2="1"><stop offset="0%" stop-color="#6f4cc8"/><stop offset="18%" stop-color="#fff5bf"/><stop offset="45%" stop-color="#c78b35"/><stop offset="70%" stop-color="#f3dca0"/><stop offset="100%" stop-color="#754fd0"/></linearGradient>
+      <filter id="segmentGlow"><feDropShadow dx="0" dy="0" stdDeviation="2.6" flood-color="#cdb7ff" flood-opacity=".45"/></filter>
+      <filter id="segmentGlowStrong"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#fff1bd" flood-opacity=".55"/></filter>
+      <filter id="starGlow"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#fff4bd" flood-opacity=".9"/></filter>
+      <filter id="innerGlow"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#8b5cf6" flood-opacity=".75"/><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#fff4bd" flood-opacity=".5"/></filter>
+    </defs>
+    <circle cx="180" cy="180" r="174" fill="#07030f"></circle>
+    <circle cx="180" cy="180" r="169" fill="none" stroke="url(#magicGold)" stroke-width="3.2"></circle>
+    ${pearls}
+    ${ticks}
+    <circle cx="180" cy="180" r="150" fill="url(#deepViolet)" stroke="rgba(255,255,255,.18)" stroke-width="1"></circle>
+    <circle class="wheel-ring" cx="180" cy="180" r="148"></circle>
+    <g class="wheel-slices">${segments}</g>
+    <circle cx="180" cy="180" r="149" fill="url(#discShine)" opacity=".54" pointer-events="none"></circle>
+    <circle class="wheel-ring-thin" cx="180" cy="180" r="146"></circle>
+    <circle class="wheel-ring-thin" cx="180" cy="180" r="73"></circle>
+    <circle class="wheel-inner-orb" cx="180" cy="180" r="64"></circle>
+    ${stars}
+    <path class="wheel-center-star" d="M180 111l10 42 43-10-31 31 31 31-43-10-10 42-10-42-43 10 31-31-31-31 43 10z"></path>
+  </svg>`;
 }
 function updateWheelPreview(){
   const disc=$('#wheelDisc'),note=$('#wheelNote');
@@ -158,7 +199,7 @@ function updateWheelPreview(){
     if(note){note.className='wheel-note error';note.textContent='至少需要 2 个有效奖项，且概率必须大于 0。'}
     return;
   }
-  disc.style.setProperty('--wheel-bg',wheelGradient(prizes));
+  disc.innerHTML=wheelSVG(prizes);
   if(note){note.className='wheel-note';note.textContent=`当前共 ${prizes.length} 个奖项，总权重 ${Number(total.toFixed(2))}。`}
 }
 function saveWheelConfig(){
@@ -198,12 +239,53 @@ function spinWheel(){
   let before=0;for(let i=0;i<index;i++)before+=prizes[i].weight;
   const middle=(before+prize.weight/2)/total*360;
   const extraTurns=5+Math.floor(Math.random()*3);
-  wheelRotation+=extraTurns*360+(360-middle);
+  const currentRotation=((wheelRotation%360)+360)%360;
+  const targetRotation=(360-middle)%360;
+  const correction=(targetRotation-currentRotation+360)%360;
+  wheelRotation+=extraTurns*360+correction;
   wheelSpinning=true;
   $('#wheelSpin').disabled=true;
   $('#wheelResult').textContent='转动中...';
-  $('#wheelDisc').style.transform=`rotate(${wheelRotation}deg)`;
-  setTimeout(()=>{wheelSpinning=false;$('#wheelSpin').disabled=false;$('#wheelResult').textContent=`抽中：${prize.name}`;toast(`转盘抽中：${prize.name}`)},4100);
+  $('#wheelDisc').dataset.winner=prize.name;
+  $('#wheelDisc').dataset.winnerAngle=middle.toFixed(3);
+  $('#wheelDisc').dataset.finalRotation=(wheelRotation%360).toFixed(3);
+  const complete=()=>{wheelSpinning=false;$('#wheelSpin').disabled=false;$('#wheelResult').textContent=`抽中：${prize.name}`;$('#wheelResult').classList.add('win');setTimeout(()=>$('#wheelResult')?.classList.remove('win'),1600);toast(`转盘抽中：${prize.name}`)};
+  if(window.gsap){gsap.to('#wheelDisc',{rotation:wheelRotation,duration:4.4,ease:'power4.out',onComplete:complete})}
+  else{$('#wheelDisc').style.transition='transform 4.4s cubic-bezier(.12,.72,.08,1)';$('#wheelDisc').style.transform=`rotate(${wheelRotation}deg)`;setTimeout(complete,4500)}
+}
+function launchMeteor(){
+  const meteor=document.createElement('span');
+  meteor.className='meteor';
+  const fromLeft=Math.random()<.55;
+  const startX=fromLeft?Math.random()*window.innerWidth*.55:window.innerWidth*(.35+Math.random()*.65);
+  const startY=-80-Math.random()*160;
+  const dx=(fromLeft?1:-1)*(window.innerWidth*(.35+Math.random()*.35));
+  const dy=window.innerHeight*(.34+Math.random()*.32);
+  const angle=(fromLeft?24:-204)+(Math.random()*10-5);
+  meteor.style.setProperty('--sx',`${Math.round(startX)}px`);
+  meteor.style.setProperty('--sy',`${Math.round(startY)}px`);
+  meteor.style.setProperty('--dx',`${Math.round(dx)}px`);
+  meteor.style.setProperty('--dy',`${Math.round(dy)}px`);
+  meteor.style.setProperty('--angle',`${angle}deg`);
+  meteor.style.animation=`meteorFly ${1.05+Math.random()*.55}s ease-out forwards`;
+  document.body.appendChild(meteor);
+  meteor.addEventListener('animationend',()=>meteor.remove(),{once:true});
+}
+function scheduleMeteor(){setTimeout(()=>{launchMeteor();scheduleMeteor()},3500+Math.random()*9500)}
+let lastTrailTime=0;
+function spawnCursorTrail(event){
+  const now=Date.now();
+  if(now-lastTrailTime<38)return;
+  lastTrailTime=now;
+  const dot=document.createElement('span');
+  dot.className='cursor-trail';
+  dot.style.setProperty('--tx',`${(Math.random()*18-9).toFixed(1)}px`);
+  dot.style.setProperty('--ty',`${(Math.random()*18-9).toFixed(1)}px`);
+  dot.style.left=`${event.clientX-4}px`;
+  dot.style.top=`${event.clientY-4}px`;
+  document.body.appendChild(dot);
+  dot.addEventListener('animationend',()=>dot.remove(),{once:true});
+  setTimeout(()=>dot.remove(),900);
 }
 let toastTimer;function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),1800)}
 
@@ -236,6 +318,8 @@ $('#previewClose').addEventListener('click',closePreview);
 $('#previewOverlay').addEventListener('click',event=>{if(event.target===event.currentTarget)closePreview()});
 overlay.addEventListener('click',event=>{if(event.target===overlay)closeResults()});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeResults();closeRedeem();closePreview();closeExchange()}});
+document.addEventListener('pointermove',spawnCursorTrail);
 document.querySelectorAll('.tab').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('.tab,.tab-content').forEach(item=>item.classList.remove('active'));button.classList.add('active');$('#'+button.dataset.tab).classList.add('active')}));
 $('#clearBtn').addEventListener('click',()=>{state.history=[];save();render();toast('记录已清空')});
 render();
+scheduleMeteor();
