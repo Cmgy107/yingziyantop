@@ -25,6 +25,7 @@
       </div>
       <div class="wallet-actions">
         <div class="currency" title="种籽余额"><span>🌱</span><b id="currency">12,800</b><small>种籽</small></div>
+        <button class="seed-entry" id="addSeedsBtn">增加种籽</button>
         <button class="redeem-entry" id="redeemEntry">兑换通道</button>
       </div>
     </header>
@@ -33,7 +34,6 @@
       <section class="hero glass">
         <div class="eyebrow">LIMITED COLLECTION · 14 CARDS</div>
         <h1>把初遇珍藏，<br><em>拼成这一年的星光</em></h1>
-        <p>收录应籽言「初遇籽言」全套 14 张收藏卡。抽到卡后会先展示卡背，再由你亲手翻开。</p>
 
         <div class="hero-actions">
           <button class="draw-btn primary" id="tenBtn">
@@ -70,12 +70,12 @@
           <span><b>15%</b><small>SR</small></span>
           <span><b>80%</b><small>R</small></span>
         </div>
-        <p class="probability">十连必得 SR 或以上 · 100 抽必得 UR</p>
       </aside>
     </section>
 
     <nav class="tabs glass" aria-label="内容切换">
       <button class="tab active" data-tab="pool">卡池详情</button>
+      <button class="tab" data-tab="wheel">转盘模式</button>
       <button class="tab" data-tab="warehouse">卡牌仓库 <span id="warehouseBadge">0</span></button>
       <button class="tab" data-tab="history">抽卡记录 <span id="historyBadge">0</span></button>
     </nav>
@@ -84,11 +84,47 @@
       <div class="section-head">
         <div>
           <small>POOL DETAILS</small>
-          <h2>点击卡牌可查看预览</h2>
+          <h2>全套卡牌</h2>
         </div>
-        <p>稀有度越高，翻开时光效越华丽。UR 使用冰晶极光，与 SR 紫光区分。</p>
       </div>
       <div class="pool-grid" id="poolGrid"></div>
+    </section>
+
+    <section class="tab-content" id="wheel">
+      <div class="section-head">
+        <div>
+          <small>LUCKY WHEEL</small>
+          <h2>转盘模式</h2>
+        </div>
+      </div>
+      <div class="wheel-panel glass">
+        <div class="wheel-stage">
+          <div class="wheel-frame">
+            <div class="wheel-pointer" aria-hidden="true"><span></span></div>
+            <div class="wheel-disc" id="wheelDisc">
+              <div class="wheel-sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="wheel-center"><span>SPIN</span></div>
+            </div>
+          </div>
+          <button class="wheel-spin" id="wheelSpin">转动转盘</button>
+          <div class="wheel-result" id="wheelResult">等待抽取</div>
+        </div>
+        <div class="wheel-config">
+          <div class="wheel-config-head">
+            <div>
+              <strong>奖项概率</strong>
+              <small>概率按权重计算，可不等于 100</small>
+            </div>
+            <button id="addWheelPrize">添加奖项</button>
+          </div>
+          <div class="wheel-prize-list" id="wheelPrizeList"></div>
+          <div class="wheel-tools">
+            <button id="saveWheelConfig">保存概率</button>
+            <button id="resetWheelConfig">恢复默认</button>
+          </div>
+          <div class="wheel-note" id="wheelNote"></div>
+        </div>
+      </div>
     </section>
 
     <section class="tab-content" id="warehouse">

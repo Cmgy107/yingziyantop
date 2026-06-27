@@ -12,8 +12,18 @@ const RANK={R:1,SR:2,SSR:3,UR:4};
 const state=JSON.parse(localStorage.getItem('firstMeetWish')||'null')||{currency:12800,pity:0,srPity:0,history:[]};
 state.redeemed=state.redeemed||[];
 if(!state.inventory){state.inventory={};state.history.forEach(item=>{if(item.id)state.inventory[item.id]=(state.inventory[item.id]||0)+1})}
+const DEFAULT_WHEEL_PRIZES=[
+  {name:'R 卡',weight:80},
+  {name:'SR 卡',weight:15},
+  {name:'SSR 卡',weight:4.5},
+  {name:'UR 卡',weight:.5}
+];
+state.wheelPrizes=Array.isArray(state.wheelPrizes)&&state.wheelPrizes.length?state.wheelPrizes:DEFAULT_WHEEL_PRIZES.map(item=>({...item}));
 const REDEEM_CODES={CHUYU2026:1600,ZIYAN0619:3200,FIRSTYEAR:800};
 const RECYCLE_VALUES={R:20,SR:80,SSR:300,UR:1000};
+const ADD_SEEDS_AMOUNT=1600;
+const WHEEL_COLORS=['#8b5cf6','#46c2ff','#ffc15f','#ff7ac8','#6ee7b7','#f87171','#a78bfa','#f0abfc','#93c5fd','#fde68a'];
+let wheelRotation=0,wheelSpinning=false;
 const $=selector=>document.querySelector(selector);
 const poolGrid=$('#poolGrid'),warehouseGrid=$('#warehouseGrid'),resultGrid=$('#resultGrid'),overlay=$('#resultOverlay');
 
@@ -36,6 +46,8 @@ function render(){
   poolGrid.innerHTML=cards.map(poolCardHTML).join('');
   warehouseGrid.innerHTML=ownedCards.length?ownedCards.map(warehouseCardHTML).join(''):'<div class="empty warehouse-empty">仓库还是空的，先去抽取第一张收藏卡吧。</div>';
   $('#historyList').innerHTML=state.history.length?state.history.map(h=>`<div class="history-item"><time>${h.time}</time><span>${h.name}</span><strong style="color:${rankColor(h.rarity)}">${h.rarity}</strong></div>`).join(''):'<div class="empty">还没有抽卡记录，去收藏第一年的星光吧。</div>';
+  renderWheelConfig();
+  updateWheelPreview();
 }
 function rankColor(rarity){return {R:'#b8b0ca',SR:'#ba91ff',SSR:'#ffc76d',UR:'#e2c5ff'}[rarity]}
 function pick(rarity){const list=cards.filter(card=>card.rarity===rarity);return list[Math.floor(Math.random()*list.length)]}
@@ -113,10 +125,97 @@ function redeem(code){
   const amount=REDEEM_CODES[normalized];state.currency+=amount;state.redeemed.push(normalized);save();render();
   message.className='redeem-message success';message.textContent=`兑换成功，获得 ${amount.toLocaleString()} 枚种籽！`;
 }
+function addSeeds(){
+  state.currency+=ADD_SEEDS_AMOUNT;
+  save();
+  render();
+  toast(`已增加 ${ADD_SEEDS_AMOUNT.toLocaleString()} 种籽`);
+}
+function sanitizeWheelPrizes(){
+  return [...document.querySelectorAll('.wheel-prize-row')].map(row=>({
+    name:row.querySelector('[data-wheel-name]').value.trim(),
+    weight:Number(row.querySelector('[data-wheel-weight]').value)
+  })).filter(item=>item.name&&Number.isFinite(item.weight)&&item.weight>0);
+}
+function renderWheelConfig(){
+  const list=$('#wheelPrizeList');
+  if(!list)return;
+  list.innerHTML=state.wheelPrizes.map((item,index)=>`<div class="wheel-prize-row" data-wheel-row="${index}"><input data-wheel-name value="${escapeHTML(item.name)}" aria-label="奖项名称"><input data-wheel-weight type="number" min="0" step="0.1" value="${item.weight}" aria-label="奖项概率"><button class="wheel-remove" data-wheel-remove="${index}" aria-label="删除奖项">×</button></div>`).join('');
+}
+function escapeHTML(text){return String(text).replace(/[&<>"']/g,match=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[match]))}
+function wheelGradient(prizes){
+  const total=prizes.reduce((sum,item)=>sum+item.weight,0);
+  if(!total)return '';
+  let cursor=0;
+  return `conic-gradient(${prizes.map((item,index)=>{const start=cursor/total*360;cursor+=item.weight;const end=cursor/total*360;return `${WHEEL_COLORS[index%WHEEL_COLORS.length]} ${start.toFixed(2)}deg ${end.toFixed(2)}deg`}).join(',')})`;
+}
+function updateWheelPreview(){
+  const disc=$('#wheelDisc'),note=$('#wheelNote');
+  if(!disc)return;
+  const prizes=sanitizeWheelPrizes();
+  const total=prizes.reduce((sum,item)=>sum+item.weight,0);
+  if(prizes.length<2||total<=0){
+    if(note){note.className='wheel-note error';note.textContent='至少需要 2 个有效奖项，且概率必须大于 0。'}
+    return;
+  }
+  disc.style.setProperty('--wheel-bg',wheelGradient(prizes));
+  if(note){note.className='wheel-note';note.textContent=`当前共 ${prizes.length} 个奖项，总权重 ${Number(total.toFixed(2))}。`}
+}
+function saveWheelConfig(){
+  const prizes=sanitizeWheelPrizes();
+  if(prizes.length<2){$('#wheelNote').className='wheel-note error';$('#wheelNote').textContent='至少保留 2 个有效奖项。';return}
+  state.wheelPrizes=prizes;
+  save();
+  render();
+  $('#wheelNote').className='wheel-note success';
+  $('#wheelNote').textContent='转盘概率已保存。';
+  toast('转盘概率已保存');
+}
+function addWheelPrize(){
+  const list=$('#wheelPrizeList');
+  const index=list.querySelectorAll('.wheel-prize-row').length;
+  list.insertAdjacentHTML('beforeend',`<div class="wheel-prize-row" data-wheel-row="${index}"><input data-wheel-name value="新奖项" aria-label="奖项名称"><input data-wheel-weight type="number" min="0" step="0.1" value="1" aria-label="奖项概率"><button class="wheel-remove" data-wheel-remove="${index}" aria-label="删除奖项">×</button></div>`);
+  updateWheelPreview();
+}
+function resetWheelConfig(){
+  state.wheelPrizes=DEFAULT_WHEEL_PRIZES.map(item=>({...item}));
+  save();
+  render();
+  $('#wheelResult').textContent='等待抽取';
+  toast('已恢复默认转盘');
+}
+function pickWheelPrize(prizes){
+  const total=prizes.reduce((sum,item)=>sum+item.weight,0);
+  let cursor=Math.random()*total;
+  for(const item of prizes){cursor-=item.weight;if(cursor<=0)return item}
+  return prizes[prizes.length-1];
+}
+function spinWheel(){
+  if(wheelSpinning)return;
+  const prizes=sanitizeWheelPrizes();
+  if(prizes.length<2){$('#wheelNote').className='wheel-note error';$('#wheelNote').textContent='至少需要 2 个有效奖项才能转动。';return}
+  const prize=pickWheelPrize(prizes),index=prizes.indexOf(prize),total=prizes.reduce((sum,item)=>sum+item.weight,0);
+  let before=0;for(let i=0;i<index;i++)before+=prizes[i].weight;
+  const middle=(before+prize.weight/2)/total*360;
+  const extraTurns=5+Math.floor(Math.random()*3);
+  wheelRotation+=extraTurns*360+(360-middle);
+  wheelSpinning=true;
+  $('#wheelSpin').disabled=true;
+  $('#wheelResult').textContent='转动中...';
+  $('#wheelDisc').style.transform=`rotate(${wheelRotation}deg)`;
+  setTimeout(()=>{wheelSpinning=false;$('#wheelSpin').disabled=false;$('#wheelResult').textContent=`抽中：${prize.name}`;toast(`转盘抽中：${prize.name}`)},4100);
+}
 let toastTimer;function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),1800)}
 
 $('#singleBtn').addEventListener('click',()=>summon(1));
 $('#tenBtn').addEventListener('click',()=>summon(10));
+$('#addSeedsBtn').addEventListener('click',addSeeds);
+$('#addWheelPrize').addEventListener('click',addWheelPrize);
+$('#saveWheelConfig').addEventListener('click',saveWheelConfig);
+$('#resetWheelConfig').addEventListener('click',resetWheelConfig);
+$('#wheelSpin').addEventListener('click',spinWheel);
+$('#wheelPrizeList').addEventListener('input',updateWheelPreview);
+$('#wheelPrizeList').addEventListener('click',event=>{const button=event.target.closest('[data-wheel-remove]');if(!button)return;button.closest('.wheel-prize-row').remove();updateWheelPreview()});
 $('#closeResult').addEventListener('click',closeResults);
 $('#revealAll').addEventListener('click',revealAll);
 $('#repeatDraw').addEventListener('click',event=>summon(Number(event.currentTarget.dataset.count||1)));
