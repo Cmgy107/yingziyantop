@@ -22,7 +22,7 @@ state.wheelPrizes=Array.isArray(state.wheelPrizes)&&state.wheelPrizes.length?sta
 const REDEEM_CODES={CHUYU2026:1600,ZIYAN0619:3200,FIRSTYEAR:800};
 const RECYCLE_VALUES={R:20,SR:80,SSR:300,UR:1000};
 const ADD_SEEDS_AMOUNT=1600;
-const WHEEL_COLORS=['#8b5cf6','#46c2ff','#ffc15f','#ff7ac8','#6ee7b7','#f87171','#a78bfa','#f0abfc','#93c5fd','#fde68a'];
+const WHEEL_COLORS=['#7b5ce8','#57c7ff','#f4bf6a','#d96cff','#60d7b2','#e9748a','#9b83ff','#e8a8ff','#77b7ff','#f0dc86'];
 let wheelRotation=0,wheelSpinning=false;
 const $=selector=>document.querySelector(selector);
 const poolGrid=$('#poolGrid'),warehouseGrid=$('#warehouseGrid'),resultGrid=$('#resultGrid'),overlay=$('#resultOverlay');
