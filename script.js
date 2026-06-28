@@ -250,8 +250,9 @@ function spinWheel(){
   $('#wheelDisc').dataset.winnerAngle=middle.toFixed(3);
   $('#wheelDisc').dataset.finalRotation=(wheelRotation%360).toFixed(3);
   const complete=()=>{wheelSpinning=false;$('#wheelSpin').disabled=false;$('#wheelResult').textContent=`抽中：${prize.name}`;$('#wheelResult').classList.add('win');setTimeout(()=>$('#wheelResult')?.classList.remove('win'),1600);toast(`转盘抽中：${prize.name}`)};
-  if(window.gsap){gsap.to('#wheelDisc',{rotation:wheelRotation,duration:4.4,ease:'power4.out',onComplete:complete})}
-  else{$('#wheelDisc').style.transition='transform 4.4s cubic-bezier(.12,.72,.08,1)';$('#wheelDisc').style.transform=`rotate(${wheelRotation}deg)`;setTimeout(complete,4500)}
+  $('#wheelDisc').style.transition='transform 4.4s cubic-bezier(.12,.72,.08,1)';
+  $('#wheelDisc').style.transform=`rotate(${wheelRotation}deg)`;
+  setTimeout(complete,4500);
 }
 function launchMeteor(){
   const meteor=document.createElement('span');
